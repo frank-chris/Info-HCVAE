@@ -83,7 +83,7 @@ def main(args):
             if os.path.exists(second_last_path):
                 os.remove(second_last_path)
             os.rename(last_path, second_last_path)
-        trainer.save(last_path, epoch)
+        trainer.save(last_path, epoch, best_bleu, best_em, best_f1)
 
 
 if __name__ == "__main__":
