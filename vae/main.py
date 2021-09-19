@@ -21,7 +21,20 @@ def main(args):
 
     args.device = torch.cuda.current_device()
 
+    last_path = os.path.join(args.resume_dir, "last.pt")
+    second_last_path =  os.path.join(args.resume_dir, "second_last.pt")
+    resume_epoch = 0
+    best_bleu, best_em, best_f1 = 0.0, 0.0, 0.0
+    if os.path.exists(second_last_path):
+        # Code to resume
+        checkpoint = torch.load(second_last_path)
+        args = checkpoint['args']
+        resume_epoch = checkpoint['epoch']
+        best_bleu, best_em, best_f1 = checkpoint['best_bleu'], checkpoint['best_em'], checkpoint['best_f1']
+
     trainer = VAETrainer(args)
+    if os.path.exists(second_last_path):
+        trainer.vae.load_state_dict(checkpoint['state_dict'])
 
     loss_log1 = tqdm(total=0, bar_format='{desc}', position=2)
     loss_log2 = tqdm(total=0, bar_format='{desc}', position=3)
@@ -30,8 +43,7 @@ def main(args):
 
     print("MODEL DIR: " + args.model_dir)
 
-    best_bleu, best_em, best_f1 = 0.0, 0.0, 0.0
-    for epoch in trange(int(args.epochs), desc="Epoch", position=0):
+    for epoch in trange(resume_epoch, int(args.epochs), desc="Epoch", position=0):
         for batch in tqdm(train_loader, desc="Train iter", leave=False, position=1):
             c_ids, q_ids, a_ids, start_positions, end_positions \
             = batch_to_device(batch, args.device)
@@ -56,14 +68,20 @@ def main(args):
                 best_em = em
             if f1 > best_f1:
                 best_f1 = f1
-                trainer.save(os.path.join(args.model_dir, "best_f1_model.pt"))
+                trainer.save(os.path.join(args.model_dir, "best_f1_model.pt"), epoch)
             if bleu > best_bleu:
                 best_bleu = bleu
-                trainer.save(os.path.join(args.model_dir, "best_bleu_model.pt"))
+                trainer.save(os.path.join(args.model_dir, "best_bleu_model.pt"), epoch)
 
             _str = 'BEST BLEU : {:02.2f} EM : {:02.2f} F1 : {:02.2f}'
             _str = _str.format(best_bleu, best_em, best_f1)
             best_eval_log.set_description_str(_str)
+
+        # Save after, each epoch, i.e the last model
+
+        if os.path.exists(last_path):
+            os.rename(last_path, second_last_path)
+        trainer.save(last_path, epoch)
 
 
 if __name__ == "__main__":
@@ -82,6 +100,9 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", default=64, type=int, help="batch_size")
     parser.add_argument("--weight_decay", default=0.0, type=float, help="weight decay")
     parser.add_argument("--clip", default=5.0, type=float, help="max grad norm")
+
+    # Extra stuff
+    parser.add_argument("--resume", type=str, default="../save/vae-checkpoint")
 
     parser.add_argument("--bert_model", default='bert-base-uncased', type=str)
     parser.add_argument('--enc_nhidden', type=int, default=300)
@@ -107,6 +128,7 @@ if __name__ == "__main__":
     model_dir = args.model_dir
     os.makedirs(model_dir, exist_ok=True)
     args.model_dir = os.path.abspath(model_dir)
+        
 
     random.seed(args.seed)
     np.random.seed(args.seed)

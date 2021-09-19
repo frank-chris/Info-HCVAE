@@ -64,9 +64,13 @@ class VAETrainer(object):
             q_ids, start_positions, end_positions = self.vae.generate(zq, za, c_ids)
         return q_ids, start_positions, end_positions, zq    
 
-    def save(self, filename):
+    def save(self, filename, epoch, best_bleu, best_em, best_f1):
         params = {
             'state_dict': self.vae.state_dict(),
-            'args': self.args
+            'args': self.args,
+            'epoch': epoch + 1,
+            'best_bleu': best_bleu,
+            'best_em': best_em,
+            'best_f1': best_f1
         }
         torch.save(params, filename)
