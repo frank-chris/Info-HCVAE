@@ -80,6 +80,8 @@ def main(args):
         # Save after, each epoch, i.e the last model
 
         if os.path.exists(last_path):
+            if os.path.exists(second_last_path):
+                os.remove(second_last_path)
             os.rename(last_path, second_last_path)
         trainer.save(last_path, epoch)
 
