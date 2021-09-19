@@ -21,8 +21,8 @@ def main(args):
 
     args.device = torch.cuda.current_device()
 
-    last_path = os.path.join(args.resume_dir, "last.pt")
-    second_last_path =  os.path.join(args.resume_dir, "second_last.pt")
+    last_path = os.path.join(args.resume, "last.pt")
+    second_last_path =  os.path.join(args.resume, "second_last.pt")
     resume_epoch = 0
     best_bleu, best_em, best_f1 = 0.0, 0.0, 0.0
     if os.path.exists(second_last_path):
@@ -83,7 +83,7 @@ def main(args):
             if os.path.exists(second_last_path):
                 os.remove(second_last_path)
             os.rename(last_path, second_last_path)
-        trainer.save(last_path, epoch)
+        trainer.save(last_path, epoch, best_bleu, best_em, best_f1)
 
 
 if __name__ == "__main__":
