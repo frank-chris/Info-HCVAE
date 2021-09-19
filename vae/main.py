@@ -21,8 +21,8 @@ def main(args):
 
     args.device = torch.cuda.current_device()
 
-    last_path = os.path.join(args.resume_dir, "last.pt")
-    second_last_path =  os.path.join(args.resume_dir, "second_last.pt")
+    last_path = os.path.join(args.resume, "last.pt")
+    second_last_path =  os.path.join(args.resume, "second_last.pt")
     resume_epoch = 0
     best_bleu, best_em, best_f1 = 0.0, 0.0, 0.0
     if os.path.exists(second_last_path):
